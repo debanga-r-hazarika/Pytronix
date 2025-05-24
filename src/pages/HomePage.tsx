@@ -74,7 +74,7 @@ const HomePage: React.FC = () => {
             justify-content: center;
             align-items: center;
             gap: 0.5rem;
-            margin: 1.5rem auto 1.5rem auto;
+            margin: 0 auto 1.5rem auto;
             width: 100%;
             pointer-events: none;
             position: static;
@@ -99,6 +99,9 @@ const HomePage: React.FC = () => {
             width: 95vw !important;
             height: 220px !important;
             max-width: 95vw !important;
+          }
+          .hero-content-mobile {
+            margin-bottom: 2.5rem !important; /* Ensure space for dots */
           }
         }
       `}</style>
@@ -129,26 +132,8 @@ const HomePage: React.FC = () => {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7 }}
-                    className="flex-1 flex flex-col items-center md:items-start justify-center max-w-xl w-full z-10 md:ml-[5%] text-center md:text-left mx-auto"
+                    className="hero-content-mobile flex-1 flex flex-col items-center md:items-start justify-center max-w-xl w-full z-10 md:ml-[5%] text-center md:text-left mx-auto"
                   >
-                    {/* Hero Image (on mobile, above text) */}
-                    <div className="w-full flex flex-col items-center">
-                      <div
-                        className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-200/60 to-blue-200/60 dark:from-blue-900/60 dark:to-purple-900/60 mx-auto"
-                        style={{ width: '800px', height: '550px', maxWidth: '90vw' }}
-                      >
-                        <img
-                          src={slide.image}
-                          alt={slide.title}
-                          className="w-full h-full object-cover object-center transition-all duration-700"
-                          loading="lazy"
-                          style={{ minHeight: '220px', minWidth: '0' }}
-                        />
-                        {/* Optional overlay for blend effect */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent dark:from-dark-navy/60 pointer-events-none"></div>
-                      </div>
-                    </div>
-                    {/* Text Content */}
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-orbitron font-bold mb-4 text-gray-900 dark:text-soft-white leading-tight drop-shadow-lg">
                       {slide.title}
                     </h1>
@@ -164,12 +149,12 @@ const HomePage: React.FC = () => {
                       </Link>
                     )}
                   </motion.div>
-                  {/* Image Right (desktop) - keep as is for md+ */}
+                  {/* Image Right */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.96 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
-                    className="hidden md:flex flex-1 items-center justify-center w-full md:w-1/2 mb-10 md:mb-0"
+                    className="flex-1 flex items-center justify-center w-full md:w-1/2 mb-10 md:mb-0"
                   >
                     <div
                       className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-200/60 to-blue-200/60 dark:from-blue-900/60 dark:to-purple-900/60 mx-auto"
@@ -202,9 +187,9 @@ const HomePage: React.FC = () => {
             No hero slides available.
           </div>
         )}
-        {/* Dots: always centered, always visible on every slide, only on mobile, below image above text */}
+        {/* Dots: always centered, always visible on every slide, only on mobile */}
         <div className="block md:hidden w-full">
-          <div className="hero-pagination mx-auto my-4"></div>
+          <div className="hero-pagination mx-auto"></div>
         </div>
         {/* Soft shadow/gradient separator below navbar */}
         <div className="pointer-events-none select-none absolute left-0 top-0 w-full h-10 z-0" style={{

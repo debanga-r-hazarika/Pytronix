@@ -62,10 +62,44 @@ const HomePage: React.FC = () => {
   
   return (
     <>
-      {/* Hide Swiper pagination dots */}
+      {/* Swiper pagination dots: only show on mobile, always centered at bottom */}
       <style>{`
-        .hero-pagination, .hero-pagination .swiper-pagination-bullet {
-          display: none !important;
+        @media (min-width: 768px) {
+          .hero-pagination { display: none !important; }
+          .hero-image-container { width: 800px !important; height: 550px !important; max-width: 90vw !important; }
+        }
+        @media (max-width: 767px) {
+          .hero-pagination {
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1.5rem auto 1.5rem auto;
+            width: 100%;
+            pointer-events: none;
+            position: static;
+          }
+          .hero-pagination .swiper-pagination-bullet {
+            pointer-events: auto;
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            opacity: 0.5;
+            border-radius: 9999px;
+            transition: background 0.3s, opacity 0.3s, box-shadow 0.3s;
+            box-shadow: 0 0 6px #3b82f6;
+            margin: 0 4px;
+          }
+          .hero-pagination .swiper-pagination-bullet-active {
+            background: #60a5fa;
+            opacity: 1;
+            box-shadow: 0 0 12px #60a5fa, 0 0 0 2px #fff;
+          }
+          .hero-image-container {
+            width: 95vw !important;
+            height: 220px !important;
+            max-width: 95vw !important;
+          }
         }
       `}</style>
       {/* Modern Responsive Hero Section as Swiper Slider */}
@@ -97,6 +131,24 @@ const HomePage: React.FC = () => {
                     transition={{ duration: 0.7 }}
                     className="flex-1 flex flex-col items-center md:items-start justify-center max-w-xl w-full z-10 md:ml-[5%] text-center md:text-left mx-auto"
                   >
+                    {/* Hero Image (on mobile, above text) */}
+                    <div className="w-full flex flex-col items-center">
+                      <div
+                        className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-200/60 to-blue-200/60 dark:from-blue-900/60 dark:to-purple-900/60 mx-auto"
+                        style={{ width: '800px', height: '550px', maxWidth: '90vw' }}
+                      >
+                        <img
+                          src={slide.image}
+                          alt={slide.title}
+                          className="w-full h-full object-cover object-center transition-all duration-700"
+                          loading="lazy"
+                          style={{ minHeight: '220px', minWidth: '0' }}
+                        />
+                        {/* Optional overlay for blend effect */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent dark:from-dark-navy/60 pointer-events-none"></div>
+                      </div>
+                    </div>
+                    {/* Text Content */}
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-orbitron font-bold mb-4 text-gray-900 dark:text-soft-white leading-tight drop-shadow-lg">
                       {slide.title}
                     </h1>
@@ -112,22 +164,23 @@ const HomePage: React.FC = () => {
                       </Link>
                     )}
                   </motion.div>
-                  {/* Image Right */}
+                  {/* Image Right (desktop) - keep as is for md+ */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.96 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
-                    className="flex-1 flex items-center justify-center w-full md:w-1/2 mb-10 md:mb-0"
+                    className="hidden md:flex flex-1 items-center justify-center w-full md:w-1/2 mb-10 md:mb-0"
                   >
-                    <div className="relative w-[120%] max-w-[120%] md:w-[120%] md:max-w-[120%] aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-200/60 to-blue-200/60 dark:from-blue-900/60 dark:to-purple-900/60"
-                      style={{ maxWidth: '120%', width: '120%' }}
+                    <div
+                      className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-200/60 to-blue-200/60 dark:from-blue-900/60 dark:to-purple-900/60 mx-auto"
+                      style={{ width: '800px', height: '550px', maxWidth: '90vw' }}
                     >
                       <img
                         src={slide.image}
                         alt={slide.title}
                         className="w-full h-full object-cover object-center transition-all duration-700"
                         loading="lazy"
-                        style={{ minHeight: '320px' }}
+                        style={{ minHeight: '220px', minWidth: '0' }}
                       />
                       {/* Optional overlay for blend effect */}
                       <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent dark:from-dark-navy/60 pointer-events-none"></div>
@@ -143,14 +196,16 @@ const HomePage: React.FC = () => {
             <button className="hero-next hidden md:flex absolute right-2 top-1/2 z-20 p-2 rounded-full bg-white/80 dark:bg-dark-navy/80 shadow hover:bg-white dark:hover:bg-dark-navy transition -translate-y-1/2" aria-label="Next Slide">
               <ChevronRight className="w-6 h-6 text-gray-700 dark:text-soft-gray" />
             </button>
-            {/* Pagination Dots */}
-            <div className="hero-pagination absolute left-1/2 bottom-6 -translate-x-1/2 z-20 flex space-x-2"></div>
             </Swiper>
         ) : (
           <div className="h-[400px] flex items-center justify-center text-gray-400 dark:text-gray-600">
             No hero slides available.
           </div>
         )}
+        {/* Dots: always centered, always visible on every slide, only on mobile, below image above text */}
+        <div className="block md:hidden w-full">
+          <div className="hero-pagination mx-auto my-4"></div>
+        </div>
         {/* Soft shadow/gradient separator below navbar */}
         <div className="pointer-events-none select-none absolute left-0 top-0 w-full h-10 z-0" style={{
           background: 'linear-gradient(to bottom, rgba(226,232,240,0.22) 0%, rgba(226,232,240,0.10) 80%, transparent 100%)',

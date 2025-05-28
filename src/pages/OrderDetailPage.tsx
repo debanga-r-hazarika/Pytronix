@@ -23,7 +23,10 @@ import {
   Shield,
   Zap,
   MessageSquare,
-  Plus
+  Plus,
+  MapPin,
+  Phone,
+  User
 } from 'lucide-react';
 import LoaderSpinner from '../components/ui/LoaderSpinner';
 import { toast } from 'react-hot-toast';
@@ -32,6 +35,45 @@ import CancellationModal from '../components/order/CancellationModal';
 import ReplacementModal from '../components/order/ReplacementModal';
 import CancellationStatus from '../components/order/CancellationStatus';
 import { createReview } from '../services/reviewService';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import InvoicePDF from '../components/order/InvoicePDF';
+
+// Base64 encoded logo image - this is a placeholder for the Phytronix logo
+const logoBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF62lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDIgNzkuMTYwOTI0LCAyMDE3LzA3LzEzLTAxOjA2OjM5ICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgKFdpbmRvd3MpIiB4bXA6Q3JlYXRlRGF0ZT0iMjAyNC0wNS0yNVQxMDoxNTowMCswNTozMCIgeG1wOk1vZGlmeURhdGU9IjIwMjQtMDUtMjVUMTA6MTc6MjUrMDU6MzAiIHhtcDpNZXRhZGF0YURhdGU9IjIwMjQtMDUtMjVUMTA6MTc6MjUrMDU6MzAiIGRjOmZvcm1hdD0iaW1hZ2UvcG5nIiBwaG90b3Nob3A6Q29sb3JNb2RlPSIzIiBwaG90b3Nob3A6SUNDUHJvZmlsZT0ic1JHQiBJRUM2MTk2Ni0yLjEiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6ZDQxODJhMDItNzMxNy01MDQz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';
+
+// Function to wrap text in PDF
+const wrapText = (doc: any, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+  const words = text.split(' ');
+  let line = '';
+  let lines = [];
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const testWidth = doc.getStringUnitWidth(testLine) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    if (testWidth > maxWidth && n > 0) {
+      lines.push(line);
+      line = words[n] + ' ';
+    } else {
+      line = testLine;
+    }
+  }
+  lines.push(line);
+  lines.forEach((l, i) => doc.text(l.trim(), x, y + i * lineHeight));
+  return lines.length * lineHeight;
+};
+
+// Helper function to truncate text if it's too long
+const truncateText = (text: string, maxLength: number) => {
+  if (!text) return '';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+};
+
+// Format currency consistently
+const formatCurrency = (amount: number) => {
+  return '₹' + amount.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
 
 const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -265,6 +307,15 @@ const OrderDetailPage: React.FC = () => {
       month: 'long',
       day: 'numeric'
     }) : null;
+  
+  // Calculate shipping fee fallback logic (same as CheckoutPage)
+  const FREE_SHIPPING_THRESHOLD = 1499;
+  const SHIPPING_FEE = 99;
+  const subtotal = order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0;
+  const qualifiesForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const shippingFee = typeof order.payment_details?.shipping_fee === 'number'
+    ? order.payment_details.shipping_fee
+    : (qualifiesForFreeShipping ? 0 : SHIPPING_FEE);
   
   // Order status message component
   const OrderStatusMessage = () => {
@@ -642,10 +693,6 @@ const OrderDetailPage: React.FC = () => {
                   <ShoppingBag className="w-5 h-5 mr-2 text-neon-blue" /> 
                   Order Items
                 </h3>
-                <button className="text-neon-blue hover:text-blue-700 dark:hover:text-blue-400 flex items-center text-sm">
-                  <Download className="w-4 h-4 mr-1" />
-                  Invoice
-                </button>
               </div>
               
               {!order.items || order.items.length === 0 ? (
@@ -795,52 +842,75 @@ const OrderDetailPage: React.FC = () => {
               <div className="p-6 bg-gray-50 dark:bg-dark-navy border-t border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between mb-2">
                   <span className="text-gray-600 dark:text-soft-gray">Subtotal</span>
-                  <span className="text-gray-900 dark:text-white font-medium">₹{Number(order.total).toLocaleString()}</span>
+                  <span className="text-gray-900 dark:text-white font-medium">₹{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span className="text-gray-600 dark:text-soft-gray">Shipping</span>
-                  <span className="text-gray-900 dark:text-white font-medium">Free</span>
+                  <span className="text-gray-900 dark:text-white font-medium">{shippingFee === 0 ? 'Free' : `₹${shippingFee.toLocaleString('en-IN')}`}</span>
                 </div>
                 <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700 mt-2">
                   <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
-                  <span className="text-lg font-bold text-neon-blue">₹{Number(order.total).toLocaleString()}</span>
+                  <span className="text-lg font-bold text-neon-blue">₹{(subtotal + shippingFee).toLocaleString('en-IN')}</span>
                 </div>
               </div>
             </div>
           </div>
           
-          {/* Order Details */}
+          {/* Right Column - Customer and Shipping Info */}
           <div className="space-y-6">
-            {/* Shipping Information */}
+            {/* Customer Information */}
+            <div className="bg-white dark:bg-light-navy rounded-lg shadow-md p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                <User className="w-5 h-5 mr-2 text-neon-blue" />
+                Customer Information
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center">
+                  <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {order.shipping_address?.full_name || 'Name not provided'}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <Mail className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+                  <span className="text-gray-600 dark:text-soft-gray">
+                    {order.email || <span className="italic text-gray-400">No email provided</span>}
+                  </span>
+                </div>
+                {order.shipping_address?.phone && (
+                  <div className="flex items-center">
+                    <Phone className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+                    <span className="text-gray-600 dark:text-soft-gray">
+                      {order.shipping_address.phone}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Shipping Address */}
             <div className="bg-white dark:bg-light-navy rounded-lg shadow-md p-6">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <TruckIcon className="w-5 h-5 mr-2 text-neon-blue" />
-                Shipping Information
+                Shipping Address
               </h3>
-              
               {order.shipping_address ? (
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-900 dark:text-white">
+                <div className="space-y-2 text-sm text-gray-600 dark:text-soft-gray">
+                  <span className="font-medium text-gray-900 dark:text-white">
                     {order.shipping_address.full_name}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-soft-gray">
-                    {order.shipping_address.street}<br />
-                    {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postal_code}<br />
-                    {order.shipping_address.country}
-                  </p>
-                  {order.shipping_address.phone && (
-                    <p className="text-sm text-gray-600 dark:text-soft-gray">
-                      Phone: {order.shipping_address.phone}
-                    </p>
-                  )}
+                  </span>
+                  <div>{order.shipping_address.street}</div>
+                  <div>
+                    {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postal_code}
+                  </div>
+                  <div>{order.shipping_address.country}</div>
+                  {order.shipping_address.phone && <div>Phone: {order.shipping_address.phone}</div>}
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                  No shipping information available
+                  No shipping address available
                 </p>
               )}
             </div>
-            
             {/* Payment Information */}
             <div className="bg-white dark:bg-light-navy rounded-lg shadow-md p-6">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
@@ -917,10 +987,28 @@ const OrderDetailPage: React.FC = () => {
                   </div>
                 )}
                 
-                <button className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-soft-gray hover:bg-gray-100 dark:hover:bg-dark-navy/60 transition">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Invoice
-                </button>
+                {/* Download Invoice button - only show for delivered orders */}
+                {order.status === 'delivered' ? (
+                  <PDFDownloadLink 
+                    document={<InvoicePDF order={order} />} 
+                    fileName={`invoice_${order.id}.pdf`}
+                    className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-soft-gray hover:bg-gray-100 dark:hover:bg-dark-navy/60 transition"
+                  >
+                    {({ blob, url, loading, error }) => 
+                      loading ? 
+                        <span>Preparing Invoice...</span> : 
+                        <div className="flex items-center">
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Invoice
+                        </div>
+                    }
+                  </PDFDownloadLink>
+                ) : (
+                  <div className="w-full flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 cursor-not-allowed">
+                    <Download className="w-4 h-4 mr-2" />
+                    Invoice available after delivery
+                  </div>
+                )}
                 
                 <Link 
                   to="/contact"

@@ -122,35 +122,30 @@ export const addAddress = async (address: Omit<Address, 'id' | 'user_id' | 'crea
   try {
     // Get current user
     const { data: userData, error: userError } = await supabase.auth.getUser();
-    
     if (userError) {
       console.error('Error getting user:', userError);
       throw new Error('Authentication error');
     }
-    
     if (!userData?.user?.id) {
       throw new Error('No user ID found.');
     }
-    
     const userId = userData.user.id;
-    
     // Add the user_id to the address object
     const addressWithUserId = {
       ...address,
-      user_id: userId
+      user_id: userId,
+      name: address.name,
+      phone: address.phone
     };
-    
     const { data, error } = await supabase
       .from('addresses')
       .insert([addressWithUserId])
       .select()
       .single();
-
     if (error) {
       console.error('Error adding address:', error);
       throw error;
     }
-
     return data;
   } catch (error) {
     console.error('Error in addAddress:', error);
@@ -162,16 +157,18 @@ export const updateAddress = async (id: string, address: Partial<Address>): Prom
   try {
     const { data, error } = await supabase
       .from('addresses')
-      .update(address)
+      .update({
+        ...address,
+        name: address.name,
+        phone: address.phone
+      })
       .eq('id', id)
       .select()
       .single();
-
     if (error) {
       console.error('Error updating address:', error);
       throw error;
     }
-
     return data;
   } catch (error) {
     console.error('Error in updateAddress:', error);

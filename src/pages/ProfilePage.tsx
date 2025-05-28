@@ -20,6 +20,8 @@ interface PasswordFormState {
 }
 
 interface AddressFormState {
+  name: string;
+  phone: string;
   type: 'shipping' | 'billing';
   street: string;
   city: string;
@@ -57,6 +59,8 @@ const ProfilePage: React.FC = () => {
     confirmPassword: ''
   });
   const [addressForm, setAddressForm] = useState<AddressFormState>({
+    name: '',
+    phone: '',
     type: 'shipping',
     street: '',
     city: '',
@@ -172,6 +176,8 @@ const ProfilePage: React.FC = () => {
   
   const handleEditAddress = (address: Address) => {
     setAddressForm({
+      name: address.name || '',
+      phone: address.phone || '',
       type: address.type,
       street: address.street,
       city: address.city,
@@ -185,6 +191,8 @@ const ProfilePage: React.FC = () => {
   
   const resetAddressForm = () => {
     setAddressForm({
+      name: '',
+      phone: '',
       type: 'shipping',
       street: '',
       city: '',
@@ -553,6 +561,30 @@ const ProfilePage: React.FC = () => {
                       <form onSubmit={handleAddAddress} className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
+                            Name
+                          </label>
+                          <input
+                            type="text"
+                            value={addressForm.name}
+                            onChange={(e) => setAddressForm({...addressForm, name: e.target.value})}
+                            required
+                            className="w-full px-4 py-2 bg-white dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
+                            Phone Number
+                          </label>
+                          <input
+                            type="tel"
+                            value={addressForm.phone}
+                            onChange={(e) => setAddressForm({...addressForm, phone: e.target.value})}
+                            required
+                            className="w-full px-4 py-2 bg-white dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
                             Address Type
                           </label>
                           <select
@@ -678,6 +710,30 @@ const ProfilePage: React.FC = () => {
                       </h3>
                       
                       <form onSubmit={handleUpdateAddress} className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
+                            Name
+                          </label>
+                          <input
+                            type="text"
+                            value={addressForm.name}
+                            onChange={(e) => setAddressForm({...addressForm, name: e.target.value})}
+                            required
+                            className="w-full px-4 py-2 bg-white dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
+                            Phone Number
+                          </label>
+                          <input
+                            type="tel"
+                            value={addressForm.phone}
+                            onChange={(e) => setAddressForm({...addressForm, phone: e.target.value})}
+                            required
+                            className="w-full px-4 py-2 bg-white dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg"
+                          />
+                        </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
                             Address Type
@@ -833,9 +889,11 @@ const ProfilePage: React.FC = () => {
                               {address.type === 'shipping' ? 'Default Shipping Address' : 'Default Billing Address'}
                             </div>
                           )}
-                          
                           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                             <div>
+                              {address.name && (
+                                <p className="font-bold text-gray-900 dark:text-white">{address.name}</p>
+                              )}
                               <p className="font-medium text-gray-900 dark:text-white">
                                 {address.street}
                               </p>
@@ -845,11 +903,13 @@ const ProfilePage: React.FC = () => {
                               <p className="text-gray-600 dark:text-soft-gray">
                                 {address.country}
                               </p>
+                              {address.phone && (
+                                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{address.phone}</p>
+                              )}
                               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                                 {address.type === 'shipping' ? 'Shipping Address' : 'Billing Address'}
                               </p>
                             </div>
-                            
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleEditAddress(address)}
@@ -857,7 +917,6 @@ const ProfilePage: React.FC = () => {
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
-                              
                               <button
                                 onClick={() => handleDeleteAddress(address.id)}
                                 className="p-2 text-red-600 hover:text-red-800 transition"

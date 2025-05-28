@@ -68,6 +68,8 @@ export interface Address {
   id: string;
   user_id: string;
   type: 'shipping' | 'billing';
+  name?: string;
+  phone?: string;
   street: string;
   city: string;
   state: string;
@@ -124,6 +126,7 @@ export interface Order {
     country: string;
     phone?: string;
   };
+  email?: string;
   payment_details?: any;
   created_at: string;
   items?: OrderItem[];

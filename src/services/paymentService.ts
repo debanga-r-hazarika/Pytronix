@@ -98,11 +98,24 @@ export const verifyRazorpayPayment = async (
       throw new Error('Authentication session has expired. Please login again.');
     }
     
-    // Update order payment details in Supabase
+    // Fetch the existing order to preserve payment_details fields like shipping_fee
+    const { data: existingOrder, error: fetchError } = await supabase
+      .from('orders')
+      .select('payment_details')
+      .eq('id', orderId)
+      .single();
+    if (fetchError) {
+      console.error('Error fetching existing order for payment details:', fetchError);
+      throw fetchError;
+    }
+    const prevPaymentDetails = existingOrder?.payment_details || {};
+    
+    // Update order payment details in Supabase, merging with previous
     const { data: orderData, error } = await supabase
       .from('orders')
       .update({
         payment_details: {
+          ...prevPaymentDetails,
           status: 'paid',
           method: 'razorpay',
           razorpay_payment_id: paymentId,

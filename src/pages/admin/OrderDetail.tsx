@@ -28,6 +28,9 @@ import {
 import LoaderSpinner from '../../components/ui/LoaderSpinner';
 import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import jsPDF from 'jspdf';
+import { getProfile } from '../../services/profileService';
+import { supabase } from '../../lib/supabaseClient';
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +54,8 @@ const OrderDetail: React.FC = () => {
   const [showResponseForm, setShowResponseForm] = useState<boolean>(false);
   const [processingResponse, setProcessingResponse] = useState<boolean>(false);
 
+  const [customerProfile, setCustomerProfile] = useState<{ full_name: string; email: string; phone: string | null } | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -73,6 +78,17 @@ const OrderDetail: React.FC = () => {
           if (orderData.tracking_id) setTrackingId(orderData.tracking_id);
           if (orderData.tracking_url) setTrackingUrl(orderData.tracking_url);
           if (orderData.shipping_carrier) setShippingCarrier(orderData.shipping_carrier);
+          // Fetch customer profile
+          if (orderData.user_id) {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('full_name, email, phone')
+              .eq('id', orderData.user_id)
+              .single();
+            if (!error && profile) {
+              setCustomerProfile(profile);
+            }
+          }
         } else {
           setError(`Order with ID ${id} not found`);
         }
@@ -218,6 +234,62 @@ const OrderDetail: React.FC = () => {
     window.print();
   };
 
+  const generateInvoicePDF = () => {
+    alert('Download Invoice button clicked');
+    console.log('generateInvoicePDF called', { order, customerProfile });
+    try {
+      if (!order) throw new Error('Order not loaded');
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text('Invoice', 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Order ID: ${order.id}`, 14, 35);
+      doc.text(`Date: ${new Date(order.created_at).toLocaleString()}`, 14, 45);
+      doc.text(`Customer: ${customerProfile?.full_name || ''}`, 14, 55);
+      doc.text(`Email: ${customerProfile?.email || ''}`, 14, 65);
+      doc.text(`Phone: ${customerProfile?.phone || ''}`, 14, 75);
+      doc.text('Shipping Address:', 14, 85);
+      const address = order.shipping_address;
+      doc.text(`${address.full_name}, ${address.street}, ${address.city}, ${address.state}, ${address.postal_code}, ${address.country}`, 14, 95, { maxWidth: 180 });
+      doc.text('Order Status: ' + order.status, 14, 110);
+      // Add products table header
+      let y = 120;
+      doc.text('Products:', 14, y);
+      y += 10;
+      doc.setFontSize(10);
+      doc.text('Name', 14, y);
+      doc.text('Qty', 80, y);
+      doc.text('Price', 120, y);
+      doc.text('Total', 160, y);
+      y += 7;
+      let subtotal = 0;
+      order.items?.forEach((item: any) => {
+        const name = item.product?.name || '';
+        const qty = item.quantity;
+        const price = item.price;
+        const total = price * qty;
+        subtotal += total;
+        doc.text(String(name), 14, y);
+        doc.text(String(qty), 80, y);
+        doc.text(String(price), 120, y);
+        doc.text(String(total), 160, y);
+        y += 7;
+      });
+      y += 5;
+      doc.setFontSize(12);
+      doc.text(`Subtotal: ₹${subtotal}`, 120, y);
+      y += 7;
+      const shippingFee = typeof order.payment_details?.shipping_fee === 'number' ? order.payment_details.shipping_fee : 0;
+      doc.text(`Shipping: ₹${shippingFee}`, 120, y);
+      y += 7;
+      doc.text(`Total: ₹${order.total || 0}`, 120, y);
+      doc.save(`invoice_${order.id}.pdf`);
+    } catch (err: any) {
+      alert('Error generating invoice: ' + err.message);
+      console.error('Error in generateInvoicePDF', err);
+    }
+  };
+
   // Function to render image previews from image links in request reason
   const renderImagePreviews = (reason: string) => {
     // Extract image URLs from text
@@ -302,6 +374,13 @@ const OrderDetail: React.FC = () => {
           >
             <Printer className="w-4 h-4 mr-2" />
             Print
+          </button>
+          <button
+            onClick={generateInvoicePDF}
+            className="flex items-center px-4 py-2 border border-blue-300 dark:border-blue-700 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
+          >
+            <LinkIcon className="w-4 h-4 mr-2" />
+            Download Invoice
           </button>
           <button
             onClick={handleDeleteOrder}
@@ -766,7 +845,6 @@ const OrderDetail: React.FC = () => {
                   </p>
                 </div>
               </div>
-              
               {order.shipping_address?.phone && (
                 <div className="flex items-center">
                   <Phone className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
@@ -775,6 +853,13 @@ const OrderDetail: React.FC = () => {
                   </p>
                 </div>
               )}
+              {/* Show email */}
+              <div className="flex items-center">
+                <Mail className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+                <p className="text-sm text-gray-600 dark:text-soft-gray">
+                  {order.email || customerProfile?.email || <span className="italic text-gray-400">No email provided</span>}
+                </p>
+              </div>
             </div>
           </div>
           
@@ -824,11 +909,6 @@ const OrderDetail: React.FC = () => {
                 {order.payment_details.status && (
                   <p className="text-sm text-gray-600 dark:text-soft-gray">
                     <span className="font-medium text-gray-700 dark:text-gray-300">Status:</span> {order.payment_details.status}
-                  </p>
-                )}
-                {order.razorpay_payment_id && (
-                  <p className="text-sm text-gray-600 dark:text-soft-gray">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Payment ID:</span> {order.razorpay_payment_id}
                   </p>
                 )}
               </div>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
-import { Phone, MapPin, CreditCard, Truck, Check, AlertTriangle, X, Plus, Calendar } from 'lucide-react';
+import { Phone, MapPin, CreditCard, Truck, Check, AlertTriangle, X, Plus, Calendar, InfoIcon } from 'lucide-react';
 import LoaderSpinner from '../components/ui/LoaderSpinner';
 import { toast } from 'react-hot-toast';
 import { createOrder, createRazorpayOrder } from '../services/orderService';
@@ -12,9 +12,6 @@ import RazorpayCheckout from '../components/payment/RazorpayCheckout';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FormState {
-  name: string;
-  email: string;
-  phone: string;
   selectedAddressId: string;
   paymentMethod: 'razorpay' | 'cod';
 }
@@ -41,9 +38,6 @@ const CheckoutPage: React.FC = () => {
   const { user } = useAuth();
   const { addresses, loading: profileLoading, addUserAddress } = useProfile();
   const [formState, setFormState] = useState<FormState>({
-    name: '',
-    email: user?.email || '',
-    phone: '',
     selectedAddressId: '',
     paymentMethod: 'razorpay'
   });
@@ -100,7 +94,6 @@ const CheckoutPage: React.FC = () => {
       setFormState(prev => ({
         ...prev,
         selectedAddressId: defaultAddress.id,
-        name: defaultAddress.street.split(',')[0] || '', // Use first line of address as name if available
       }));
     }
   }, [cart.items, addresses, navigate, orderComplete, formState.selectedAddressId]);
@@ -148,18 +141,6 @@ const CheckoutPage: React.FC = () => {
   };
   
   const validateForm = (): boolean => {
-    if (!formState.name) {
-      toast.error('Please enter your name');
-      return false;
-    }
-    if (!formState.email) {
-      toast.error('Please enter your email');
-      return false;
-    }
-    if (!formState.phone) {
-      toast.error('Please enter your phone number');
-      return false;
-    }
     if (!formState.selectedAddressId) {
       toast.error('Please select a shipping address');
       return false;
@@ -193,6 +174,8 @@ const CheckoutPage: React.FC = () => {
     try {
       setAddingAddress(true);
       await addUserAddress({
+        name: newAddressForm.full_name,
+        phone: newAddressForm.phone,
         type: newAddressForm.type,
         street: newAddressForm.street,
         city: newAddressForm.city,
@@ -263,12 +246,14 @@ const CheckoutPage: React.FC = () => {
         total: finalTotal,
         shipping_address: {
           ...selectedAddress,
-          full_name: formState.name,
-          phone: formState.phone
+          full_name: selectedAddress?.name || '',
+          phone: selectedAddress?.phone || ''
         },
+        email: user.email,
         payment_details: {
           method: formState.paymentMethod,
-          status: 'pending'
+          status: 'pending',
+          shipping_fee: shippingFee
         },
         status: 'pending'
       };
@@ -301,11 +286,12 @@ const CheckoutPage: React.FC = () => {
               total: finalTotal,
               payment_details: {
                 razorpay_order_id: razorpayData.id,
-                razorpay_key: razorpayData.key || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_89CCL7nHE71FCf'
+                razorpay_key: razorpayData.key || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_89CCL7nHE71FCf',
+                shipping_fee: shippingFee
               },
               shipping_address: {
-                full_name: formState.name,
-                phone: formState.phone,
+                full_name: selectedAddress?.name || '',
+                phone: selectedAddress?.phone || '',
                 ...selectedAddress
               }
             } as Order);
@@ -450,68 +436,8 @@ const CheckoutPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Form */}
           <div className="lg:col-span-2">
-            {/* Customer Information */}
-            <div className="bg-white dark:bg-light-navy rounded-lg shadow-lg p-6 mb-8">
-              <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
-                Customer Information
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
-                    Full Name*
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formState.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 bg-white dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
-                    Email*
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formState.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 bg-white dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
-                  Phone Number*
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formState.phone}
-                    onChange={handleInputChange}
-                    required
-                    className="pl-10 w-full px-4 py-2 bg-white dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg"
-                    placeholder="+91 9876543210"
-                  />
-                </div>
-              </div>
-            </div>
-            
             {/* Shipping Address */}
-            <div className="bg-white dark:bg-light-navy rounded-lg shadow-lg p-6 mb-8">
+            <div className="bg-white dark:bg-light-navy rounded-lg shadow-lg p-6 mb-8 mt-4">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
                   <MapPin className="w-5 h-5 text-neon-blue mr-2" />
@@ -549,7 +475,7 @@ const CheckoutPage: React.FC = () => {
                         key={address.id}
                         className={`border rounded-lg p-4 cursor-pointer transition ${
                           formState.selectedAddressId === address.id
-                            ? 'border-neon-blue dark:border-neon-blue bg-blue-50 dark:bg-blue-900/20'
+                            ? 'border-neon-blue dark:border-neon-blue bg-blue-50 dark:bg-blue-900/20 shadow-lg'
                             : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                         onClick={() => handleAddressChange(address.id)}
@@ -564,6 +490,9 @@ const CheckoutPage: React.FC = () => {
                             className="mt-1 h-4 w-4 text-neon-blue focus:ring-neon-blue border-gray-300"
                           />
                           <div className="ml-3">
+                            {address.name && (
+                              <p className="font-bold text-gray-900 dark:text-white">{address.name}</p>
+                            )}
                             <p className="font-medium text-gray-900 dark:text-white">
                               {address.street}
                             </p>
@@ -573,6 +502,9 @@ const CheckoutPage: React.FC = () => {
                             <p className="text-gray-600 dark:text-soft-gray">
                               {address.country}
                             </p>
+                            {address.phone && (
+                              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{address.phone}</p>
+                            )}
                             {address.is_default && (
                               <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                                 Default
@@ -585,6 +517,45 @@ const CheckoutPage: React.FC = () => {
                 </div>
               )}
             </div>
+            
+            {/* Show Customer Information only if a shipping address is selected */}
+            {selectedAddress && (
+              <div className="bg-white dark:bg-light-navy rounded-lg shadow-lg p-6 mb-8 animate-fade-in">
+                <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
+                  Customer Information
+                </h2>
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded text-blue-800 dark:text-blue-200 text-sm flex items-center">
+                  <InfoIcon className="w-5 h-5 mr-2 text-blue-400 dark:text-blue-300" />
+                  No need to enter these details. Your name, phone number, and email are automatically fetched from your selected address and profile.
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
+                      Full Name
+                    </label>
+                    <div className="w-full px-4 py-2 bg-gray-100 dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white">
+                      {selectedAddress?.name || <span className="text-gray-400">No name</span>}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
+                      Email
+                    </label>
+                    <div className="w-full px-4 py-2 bg-gray-100 dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white">
+                      {user?.email || <span className="text-gray-400">No email</span>}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
+                    Phone Number
+                  </label>
+                  <div className="w-full px-4 py-2 bg-gray-100 dark:bg-dark-navy border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white">
+                    {selectedAddress?.phone || <span className="text-gray-400">No phone</span>}
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* Payment Method */}
             <div className="bg-white dark:bg-light-navy rounded-lg shadow-lg p-6">
@@ -620,39 +591,11 @@ const CheckoutPage: React.FC = () => {
                       <p className="text-sm text-gray-600 dark:text-soft-gray">
                         Pay securely with credit/debit cards, UPI, etc.
                       </p>
-                      <div className="flex mt-3 space-x-4">
-                        <img src="https://www.npci.org.in/images/npci/upi/upi-logo.png" alt="UPI" className="h-10 object-contain" />
-                        <img src="https://i.imgur.com/vEb10Db.png" alt="Visa" className="h-10 object-contain" />
-                        <img src="https://i.imgur.com/FQaHIop.png" alt="Mastercard" className="h-10 object-contain" />
+                      <div className="flex flex-wrap items-center justify-start gap-2 mt-3 md:gap-4 md:flex-nowrap">
+                        <img src="/public/fonts/upi-logo.png" alt="UPI" className="h-7 w-12 object-contain rounded bg-white shadow-sm border border-gray-200" style={{maxWidth:'48px'}} />
+                        <img src="/public/fonts/visa-logo.png" alt="Visa" className="h-7 w-12 object-contain rounded bg-white shadow-sm border border-gray-200" style={{maxWidth:'48px'}} />
+                        <img src="/public/fonts/mastercard-logo.png" alt="Mastercard" className="h-7 w-12 object-contain rounded bg-white shadow-sm border border-gray-200" style={{maxWidth:'48px'}} />
                       </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div
-                  className={`border rounded-lg p-4 cursor-pointer transition ${
-                    formState.paymentMethod === 'cod'
-                      ? 'border-neon-blue dark:border-neon-blue bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                  onClick={() => handlePaymentMethodChange('cod')}
-                >
-                  <div className="flex items-start">
-                    <input
-                      type="radio"
-                      id="cod"
-                      name="paymentMethod"
-                      checked={formState.paymentMethod === 'cod'}
-                      onChange={() => handlePaymentMethodChange('cod')}
-                      className="mt-1 h-4 w-4 text-neon-blue focus:ring-neon-blue border-gray-300"
-                    />
-                    <div className="ml-3">
-                      <label htmlFor="cod" className="font-medium text-gray-900 dark:text-white cursor-pointer">
-                        Cash on Delivery
-                      </label>
-                      <p className="text-sm text-gray-600 dark:text-soft-gray">
-                        Pay when you receive your order.
-                      </p>
                     </div>
                   </div>
                 </div>

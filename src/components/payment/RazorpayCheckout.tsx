@@ -95,15 +95,11 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ order, onSuccess, o
           );
           
           if (success) {
-            // Important: Use onSuccess callback instead of direct navigation
             if (onSuccess) {
               onSuccess();
             }
-            
-            toast.success('Payment successful! Your order has been placed.');
           } else {
             setError('Payment verification failed');
-            toast.error('Payment verification failed');
             if (onCancel) {
               onCancel();
             }
@@ -112,7 +108,8 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ order, onSuccess, o
           console.error('Error handling payment:', error);
           const errorMessage = error instanceof Error ? error.message : 'Payment processing error';
           setError(errorMessage);
-          toast.error(errorMessage);
+          setPaymentError(`Payment setup failed: ${errorMessage}. Please try again later.`);
+          toast.error('Payment gateway error. Please try again later.');
           
           if (onCancel) {
             onCancel();
@@ -134,8 +131,6 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ order, onSuccess, o
       },
       modal: {
         ondismiss: function() {
-          toast.error('Payment cancelled');
-          
           if (onCancel) {
             onCancel();
           }
@@ -148,7 +143,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({ order, onSuccess, o
       rzp.on('payment.failed', function (response: any) {
         const errorMsg = response.error.description || "Payment failed";
         setError(errorMsg);
-        toast.error(`Payment failed: ${errorMsg}`);
+        setPaymentError(`Payment setup failed: ${errorMsg}. Please try again later.`);
         if (onCancel) {
           onCancel();
         }

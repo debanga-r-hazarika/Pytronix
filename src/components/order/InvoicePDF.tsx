@@ -265,13 +265,8 @@ interface InvoicePDFProps {
 
 const InvoicePDF: React.FC<InvoicePDFProps> = ({ order }) => {
   const subtotal = order.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-  // Unify shipping fee logic with checkout page
-  const FREE_SHIPPING_THRESHOLD = 1499;
-  const SHIPPING_FEE = 99;
-  const qualifiesForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
-  const shippingFee = typeof order.payment_details?.shipping_fee === 'number' && !isNaN(order.payment_details.shipping_fee)
-    ? order.payment_details.shipping_fee
-    : (qualifiesForFreeShipping ? 0 : SHIPPING_FEE);
+  const shippingFee = order.payment_details?.shipping_fee ?? 0;
+  const couponDiscount = order.coupon_discount ?? 0;
   const address = order.shipping_address;
   const userEmail = order.email || 'N/A';
   const userPhone = address?.phone || 'N/A';
@@ -363,12 +358,18 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ order }) => {
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Shipping Fee</Text>
-            <Text style={styles.summaryValue}>{shippingFee === 0 ? 'Free' : '\u20B9' + shippingFee.toLocaleString('en-IN')}</Text>
+            <Text style={styles.summaryValue}>{'\u20B9'}{shippingFee.toLocaleString('en-IN')}</Text>
           </View>
+          {order.coupon_code && (
+            <View style={styles.summaryRow}>
+              <Text style={{ ...styles.summaryLabel, color: '#2e7d32' }}>Coupon ({order.coupon_code})</Text>
+              <Text style={{ ...styles.summaryValue, color: '#2e7d32' }}>-{'\u20B9'}{(couponDiscount).toLocaleString('en-IN')}</Text>
+            </View>
+          )}
           <View style={styles.summaryDivider} />
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total</Text>
-            <Text style={[styles.summaryValue, { fontFamily: 'NotoSans', fontWeight: 'bold', color: '#1a237e' }]}>{'\u20B9'}{(subtotal + shippingFee).toLocaleString('en-IN')}</Text>
+            <Text style={[styles.summaryValue, { fontFamily: 'NotoSans', fontWeight: 'bold', color: '#1a237e' }]}>{'\u20B9'}{(order.total).toLocaleString('en-IN')}</Text>
           </View>
         </View>
 

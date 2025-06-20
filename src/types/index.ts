@@ -133,6 +133,8 @@ export interface Order {
   tracking_id?: string;
   tracking_url?: string;
   shipping_carrier?: string;
+  coupon_code?: string | null;
+  coupon_discount?: number | null;
 }
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -271,3 +273,13 @@ export type NotificationType =
   | 'password_changed'
   | 'account_updated'
   | 'system';
+
+export interface Coupon {
+  id: string;
+  code: string;
+  type: 'free_shipping' | 'discount';
+  value?: number;
+  expires_at?: string;
+  is_active: boolean;
+  created_at: string;
+}

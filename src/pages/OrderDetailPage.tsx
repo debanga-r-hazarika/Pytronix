@@ -308,14 +308,11 @@ const OrderDetailPage: React.FC = () => {
       day: 'numeric'
     }) : null;
   
-  // Calculate shipping fee fallback logic (same as CheckoutPage)
-  const FREE_SHIPPING_THRESHOLD = 1499;
-  const SHIPPING_FEE = 99;
+  // Calculate shipping and totals from order data
   const subtotal = order.items ? order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) : 0;
-  const qualifiesForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
-  const shippingFee = typeof order.payment_details?.shipping_fee === 'number'
-    ? order.payment_details.shipping_fee
-    : (qualifiesForFreeShipping ? 0 : SHIPPING_FEE);
+  const shippingFee = order.payment_details?.shipping_fee ?? 0;
+  const couponDiscount = order.coupon_discount ?? 0;
+  const total = order.total;
   
   // Order status message component
   const OrderStatusMessage = () => {
@@ -838,11 +835,19 @@ const OrderDetailPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between mb-2">
                   <span className="text-gray-600 dark:text-soft-gray">Shipping</span>
-                  <span className="text-gray-900 dark:text-white font-medium">{shippingFee === 0 ? 'Free' : `₹${shippingFee.toLocaleString('en-IN')}`}</span>
+                  <span className="text-gray-900 dark:text-white font-medium">₹{shippingFee.toLocaleString('en-IN')}</span>
                 </div>
+                {order.coupon_code && (
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-600 dark:text-soft-gray">Coupon ({order.coupon_code})</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">
+                      -₹{(couponDiscount).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700 mt-2">
                   <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
-                  <span className="text-lg font-bold text-neon-blue">₹{(subtotal + shippingFee).toLocaleString('en-IN')}</span>
+                  <span className="text-lg font-bold text-neon-blue">₹{total.toLocaleString('en-IN')}</span>
                 </div>
               </div>
             </div>

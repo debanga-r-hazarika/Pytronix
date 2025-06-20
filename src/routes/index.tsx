@@ -15,7 +15,6 @@ const LoginPage = lazy(() => import('../pages/LoginPage'));
 const AdminPage = lazy(() => import('../pages/admin/AdminPage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
-const AdminSetupPage = lazy(() => import('../pages/AdminSetupPage'));
 const AdminCategoryPage = lazy(() => import('../pages/admin/AdminCategoryPage'));
 const AboutUsPage = lazy(() => import('../pages/AboutUsPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
@@ -79,7 +78,6 @@ const AppRoutes: React.FC = () => {
                   <AdminPage />
                 </AuthGuard>
               } />
-              <Route path="/admin-setup" element={<AdminSetupPage />} />
               <Route path="/admin/orders/:id" element={
                 <AuthGuard>
                   <OrderDetail />

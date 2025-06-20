@@ -6,8 +6,8 @@ import { useProfile } from '../context/ProfileContext';
 import { Phone, MapPin, CreditCard, Truck, Check, AlertTriangle, X, Plus, Calendar, InfoIcon } from 'lucide-react';
 import LoaderSpinner from '../components/ui/LoaderSpinner';
 import { toast } from 'react-hot-toast';
-import { createOrder, createRazorpayOrder } from '../services/orderService';
-import { Address, Order } from '../types';
+import { createOrder, createRazorpayOrder, fetchCouponByCode } from '../services/orderService';
+import { Address, Order, Coupon } from '../types';
 import RazorpayCheckout from '../components/payment/RazorpayCheckout';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -60,14 +60,24 @@ const CheckoutPage: React.FC = () => {
     type: 'shipping',
     is_default: false
   });
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponStatus, setCouponStatus] = useState<'idle' | 'valid' | 'invalid' | 'expired'>('idle');
   
-  // Calculate shipping fee
+  // Calculate shipping and totals
+  const subtotal = cart.total;
   const FREE_SHIPPING_THRESHOLD = 1499;
   const SHIPPING_FEE = 99;
-  const qualifiesForFreeShipping = cart.total >= FREE_SHIPPING_THRESHOLD;
-  const shippingFee = qualifiesForFreeShipping ? 0 : SHIPPING_FEE;
-  const amountForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cart.total);
-  const progressPercentage = Math.min(100, (cart.total / FREE_SHIPPING_THRESHOLD) * 100);
+  
+  const qualifiesForFreeShippingByAmount = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const hasFreeShippingCoupon = appliedCoupon?.type === 'free_shipping';
+  
+  const originalShippingFee = qualifiesForFreeShippingByAmount ? 0 : SHIPPING_FEE;
+  const couponDiscount = hasFreeShippingCoupon && !qualifiesForFreeShippingByAmount ? SHIPPING_FEE : 0;
+  
+  const finalTotal = subtotal + originalShippingFee - couponDiscount;
+  const amountForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+  const progressPercentage = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
 
   // Calculate expected delivery date
   const getExpectedDeliveryDate = () => {
@@ -225,6 +235,24 @@ const CheckoutPage: React.FC = () => {
     }
   };
   
+  const handleApplyCoupon = async () => {
+    setCouponStatus('idle');
+    setAppliedCoupon(null);
+    const input = couponInput.trim();
+    if (!input) return;
+    const coupon = await fetchCouponByCode(input);
+    if (!coupon) {
+      setCouponStatus('invalid');
+      return;
+    }
+    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+      setCouponStatus('expired');
+      return;
+    }
+    setAppliedCoupon(coupon);
+    setCouponStatus('valid');
+  };
+  
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
     
@@ -237,8 +265,6 @@ const CheckoutPage: React.FC = () => {
     try {
       setLoading(true);
       setPaymentError(null);
-      
-      const finalTotal = cart.total + shippingFee;
       
       // Order details for database
       const orderDetails = {
@@ -253,9 +279,12 @@ const CheckoutPage: React.FC = () => {
         payment_details: {
           method: formState.paymentMethod,
           status: 'pending',
-          shipping_fee: shippingFee
+          shipping_fee: originalShippingFee,
+          subtotal: subtotal
         },
-        status: 'pending'
+        status: 'pending',
+        coupon_code: appliedCoupon?.code || null,
+        coupon_discount: couponDiscount
       };
       
       // Create order in database
@@ -287,7 +316,7 @@ const CheckoutPage: React.FC = () => {
               payment_details: {
                 razorpay_order_id: razorpayData.id,
                 razorpay_key: razorpayData.key || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_89CCL7nHE71FCf',
-                shipping_fee: shippingFee
+                shipping_fee: originalShippingFee
               },
               shipping_address: {
                 full_name: selectedAddress?.name || '',
@@ -343,7 +372,7 @@ const CheckoutPage: React.FC = () => {
   
   // Order success
   if (orderComplete) {
-    const finalTotal = cart.total + shippingFee;
+    const finalTotal = cart.total + originalShippingFee;
     
     return (
       <div className="min-h-screen pt-32 pb-12">
@@ -621,8 +650,41 @@ const CheckoutPage: React.FC = () => {
                 Order Summary
               </h2>
               
+              {/* Coupon Input */}
+              <div className="mb-4">
+                <label htmlFor="coupon" className="block text-sm font-medium text-gray-700 dark:text-soft-gray mb-1">
+                  Coupon Code
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="coupon"
+                    type="text"
+                    value={couponInput}
+                    onChange={e => setCouponInput(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-dark-navy"
+                    placeholder="Enter coupon code"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    className="btn-primary px-4"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {couponStatus === 'valid' && (
+                  <p className="text-green-600 text-xs mt-1">Coupon applied: {appliedCoupon?.type === 'free_shipping' ? 'Free Shipping' : 'Discount'}</p>
+                )}
+                {couponStatus === 'invalid' && (
+                  <p className="text-red-600 text-xs mt-1">Invalid coupon code.</p>
+                )}
+                {couponStatus === 'expired' && (
+                  <p className="text-yellow-600 text-xs mt-1">Coupon expired.</p>
+                )}
+              </div>
+              
               {/* Free Shipping Banner */}
-              {!qualifiesForFreeShipping && (
+              {!qualifiesForFreeShippingByAmount && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
                   <p className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-2">
                     Add ₹{amountForFreeShipping.toLocaleString()} more for FREE Delivery
@@ -643,23 +705,25 @@ const CheckoutPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between py-2 text-gray-600 dark:text-soft-gray">
                   <span>Subtotal</span>
-                  <span>₹{cart.total.toLocaleString()}</span>
+                  <span>₹{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between py-2 text-gray-600 dark:text-soft-gray">
                   <span>Shipping</span>
-                  {qualifiesForFreeShipping ? (
-                    <span className="text-green-600 dark:text-green-400">Free</span>
-                  ) : (
-                    <span>₹{SHIPPING_FEE}</span>
-                  )}
+                  <span>₹{originalShippingFee.toLocaleString()}</span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between py-2 text-green-600 dark:text-green-400">
+                    <span>Coupon Discount ({appliedCoupon?.code})</span>
+                    <span>-₹{couponDiscount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between py-2 text-gray-600 dark:text-soft-gray">
                   <span>Tax</span>
                   <span>Included</span>
                 </div>
                 <div className="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                   <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
-                  <span className="text-lg font-bold text-neon-blue">₹{(cart.total + shippingFee).toLocaleString()}</span>
+                  <span className="text-lg font-bold text-neon-blue">₹{finalTotal.toLocaleString()}</span>
                 </div>
               </div>
               

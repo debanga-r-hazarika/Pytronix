@@ -31,6 +31,7 @@ import { motion } from 'framer-motion';
 import jsPDF from 'jspdf';
 import { getProfile } from '../../services/profileService';
 import { supabase } from '../../lib/supabaseClient';
+import { markOrderAsViewed } from '../../services/adminService';
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -104,6 +105,12 @@ const OrderDetail: React.FC = () => {
     };
     
     fetchData();
+  }, [id]);
+  
+  useEffect(() => {
+    if (id) {
+      markOrderAsViewed(id);
+    }
   }, [id]);
   
   const handleStatusChange = async (newStatus: OrderStatus) => {
@@ -279,7 +286,11 @@ const OrderDetail: React.FC = () => {
       doc.setFontSize(12);
       doc.text(`Subtotal: ₹${subtotal}`, 120, y);
       y += 7;
-      const shippingFee = typeof order.payment_details?.shipping_fee === 'number' ? order.payment_details.shipping_fee : 0;
+      const FREE_SHIPPING_THRESHOLD = 1499;
+      const SHIPPING_FEE = 99;
+      const hasFreeShippingCoupon = order.coupon_code && order.payment_details?.shipping_fee === 0;
+      const qualifiesForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD || hasFreeShippingCoupon;
+      const shippingFee = typeof order.payment_details?.shipping_fee === 'number' ? order.payment_details.shipping_fee : (qualifiesForFreeShipping ? 0 : SHIPPING_FEE);
       doc.text(`Shipping: ₹${shippingFee}`, 120, y);
       y += 7;
       doc.text(`Total: ₹${order.total || 0}`, 120, y);
@@ -350,6 +361,11 @@ const OrderDetail: React.FC = () => {
       </div>
     );
   }
+
+  const subtotal = order.items ? order.items.reduce((sum, item) => sum + item.price * item.quantity, 0) : 0;
+  const shippingFee = order.payment_details?.shipping_fee ?? 0;
+  const couponDiscount = order.coupon_discount ?? 0;
+  const total = order.total;
 
   return (
     <div className="container mx-auto py-8">

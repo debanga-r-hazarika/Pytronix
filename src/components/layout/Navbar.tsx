@@ -157,12 +157,6 @@ const Navbar: React.FC = () => {
                       Admin Dashboard
                     </Link>
                   )}
-                  {!isAdmin && (
-                    <Link to="/admin-setup" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-soft-gray hover:bg-gray-100 dark:hover:bg-dark-navy">
-                      <Shield className="w-4 h-4 mr-2" />
-                      Admin Setup
-                    </Link>
-                  )}
                   <button 
                     onClick={handleSignOut}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-dark-navy"
@@ -315,12 +309,6 @@ const Navbar: React.FC = () => {
                   <Link to="/admin" className="py-2 flex items-center text-neon-blue">
                     <Shield className="w-4 h-4 mr-2" />
                     Admin Dashboard
-                  </Link>
-                )}
-                {!isAdmin && (
-                  <Link to="/admin-setup" className="py-2 flex items-center text-gray-700 dark:text-soft-gray hover:text-neon-blue dark:hover:text-neon-blue">
-                    <Shield className="w-4 h-4 mr-2" />
-                    Admin Setup
                   </Link>
                 )}
                 <button 

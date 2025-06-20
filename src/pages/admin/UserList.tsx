@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getAllUsers, adminUserAction } from '../../services/userService';
 import { User, Profile } from '../../types';
 import { Shield, Trash, Ban, UserCheck, Loader2, Download, ArrowUp, ArrowDown } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 function exportToCSV(users: any[]) {
   const headers = ['Email', 'Full Name', 'Phone', 'Role', 'Status', 'Created'];
@@ -24,6 +25,7 @@ function exportToCSV(users: any[]) {
 }
 
 const UserList: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,84 +126,87 @@ const UserList: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((u) => (
-              <tr key={u.id} className="border-b border-gray-100 dark:border-gray-800">
-                <td className="px-2 py-2 text-center">
-                  <input type="checkbox" checked={selected.has(u.id)} onChange={() => handleSelect(u.id)} />
-                </td>
-                <td className="px-4 py-2">{u.email}</td>
-                <td className="px-4 py-2 flex items-center gap-2">
-                  {u.profile?.profile_picture && (
-                    <img src={u.profile.profile_picture} alt="Profile" className="w-7 h-7 rounded-full object-cover border" />
-                  )}
-                  {u.profile?.full_name || '-'}
-                </td>
-                <td className="px-4 py-2">{u.profile?.phone || '-'}</td>
-                <td className="px-4 py-2">
-                  {u.role === 'admin' ? (
-                    <span className="inline-flex items-center text-green-600 font-semibold"><Shield className="w-4 h-4 mr-1" /> Admin</span>
-                  ) : (
-                    <span className="text-gray-700 dark:text-soft-gray">User</span>
-                  )}
-                </td>
-                <td className="px-4 py-2">
-                  {u.banned ? (
-                    <span className="text-red-600 font-semibold flex items-center"><Ban className="w-4 h-4 mr-1" />Banned</span>
-                  ) : (
-                    <span className="text-green-600 font-semibold flex items-center"><UserCheck className="w-4 h-4 mr-1" />Active</span>
-                  )}
-                </td>
-                <td className="px-4 py-2">{new Date(u.created_at).toLocaleDateString()}</td>
-                <td className="px-4 py-2 space-x-1 flex items-center">
-                  {u.role !== 'admin' ? (
+            {filtered.map((u) => {
+              const isSelf = currentUser && u.id === currentUser.id;
+              return (
+                <tr key={u.id} className="border-b border-gray-100 dark:border-gray-800">
+                  <td className="px-2 py-2 text-center">
+                    <input type="checkbox" checked={selected.has(u.id)} onChange={() => handleSelect(u.id)} />
+                  </td>
+                  <td className="px-4 py-2">{u.email}</td>
+                  <td className="px-4 py-2 flex items-center gap-2">
+                    {u.profile?.profile_picture && (
+                      <img src={u.profile.profile_picture} alt="Profile" className="w-7 h-7 rounded-full object-cover border" />
+                    )}
+                    {u.profile?.full_name || '-'}
+                  </td>
+                  <td className="px-4 py-2">{u.profile?.phone || '-'}</td>
+                  <td className="px-4 py-2">
+                    {u.role === 'admin' ? (
+                      <span className="inline-flex items-center text-green-600 font-semibold"><Shield className="w-4 h-4 mr-1" /> Admin</span>
+                    ) : (
+                      <span className="text-gray-700 dark:text-soft-gray">User</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    {u.banned ? (
+                      <span className="text-red-600 font-semibold flex items-center"><Ban className="w-4 h-4 mr-1" />Banned</span>
+                    ) : (
+                      <span className="text-green-600 font-semibold flex items-center"><UserCheck className="w-4 h-4 mr-1" />Active</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-2 space-x-1 flex items-center">
+                    {u.role !== 'admin' ? (
+                      <button
+                        className="btn-xs bg-green-100 text-green-700 rounded p-1"
+                        disabled={actionLoading === u.id + 'promote' || isSelf}
+                        onClick={() => handleAction(u.id, 'promote')}
+                        title={isSelf ? "You cannot promote yourself" : "Promote to Admin"}
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        className="btn-xs bg-yellow-100 text-yellow-700 rounded p-1"
+                        disabled={actionLoading === u.id + 'demote' || isSelf}
+                        onClick={() => handleAction(u.id, 'demote')}
+                        title={isSelf ? "You cannot demote yourself" : "Demote to User"}
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </button>
+                    )}
+                    {u.banned ? (
+                      <button
+                        className="btn-xs bg-blue-100 text-blue-700 rounded p-1"
+                        disabled={actionLoading === u.id + 'unban' || isSelf}
+                        onClick={() => handleAction(u.id, 'unban')}
+                        title={isSelf ? "You cannot unban yourself" : "Unban User"}
+                      >
+                        <UserCheck className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        className="btn-xs bg-red-100 text-red-700 rounded p-1"
+                        disabled={actionLoading === u.id + 'ban' || isSelf}
+                        onClick={() => handleAction(u.id, 'ban')}
+                        title={isSelf ? "You cannot ban yourself" : "Ban User"}
+                      >
+                        <Ban className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
-                      className="btn-xs bg-green-100 text-green-700 rounded p-1"
-                      disabled={actionLoading === u.id + 'promote'}
-                      onClick={() => handleAction(u.id, 'promote')}
-                      title="Promote to Admin"
+                      className="btn-xs bg-gray-200 text-gray-700 rounded p-1"
+                      disabled={actionLoading === u.id + 'delete' || isSelf}
+                      onClick={() => handleAction(u.id, 'delete')}
+                      title={isSelf ? "You cannot delete yourself" : "Delete User"}
                     >
-                      <ArrowUp className="w-4 h-4" />
+                      <Trash className="w-4 h-4" />
                     </button>
-                  ) : (
-                    <button
-                      className="btn-xs bg-yellow-100 text-yellow-700 rounded p-1"
-                      disabled={actionLoading === u.id + 'demote'}
-                      onClick={() => handleAction(u.id, 'demote')}
-                      title="Demote to User"
-                    >
-                      <ArrowDown className="w-4 h-4" />
-                    </button>
-                  )}
-                  {u.banned ? (
-                    <button
-                      className="btn-xs bg-blue-100 text-blue-700 rounded p-1"
-                      disabled={actionLoading === u.id + 'unban'}
-                      onClick={() => handleAction(u.id, 'unban')}
-                      title="Unban User"
-                    >
-                      <UserCheck className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <button
-                      className="btn-xs bg-red-100 text-red-700 rounded p-1"
-                      disabled={actionLoading === u.id + 'ban'}
-                      onClick={() => handleAction(u.id, 'ban')}
-                      title="Ban User"
-                    >
-                      <Ban className="w-4 h-4" />
-                    </button>
-                  )}
-                  <button
-                    className="btn-xs bg-gray-200 text-gray-700 rounded p-1"
-                    disabled={actionLoading === u.id + 'delete'}
-                    onClick={() => handleAction(u.id, 'delete')}
-                    title="Delete User"
-                  >
-                    <Trash className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

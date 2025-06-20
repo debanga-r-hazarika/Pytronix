@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
-import { Order, OrderStatus } from '../types';
+import { Order, OrderStatus, Coupon } from '../types';
 import { toast } from 'react-hot-toast';
 
 interface OrderDetails {
@@ -493,4 +493,35 @@ export const getOrderStatusCounts = async () => {
       cancelled: 0
     };
   }
+};
+
+/**
+ * Fetch a coupon by code
+ */
+export const fetchCouponByCode = async (code: string): Promise<Coupon | null> => {
+  const trimmedCode = code.trim();
+  const { data, error } = await supabase
+    .from('coupons')
+    .select('*')
+    .ilike('code', trimmedCode)
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle();
+  console.log('fetchCouponByCode debug:', { data, error, trimmedCode });
+  if (error) {
+    console.error('Error fetching coupon:', error);
+    return null;
+  }
+  if (!data) return null;
+  // Check expiry
+  if (data.expires_at && new Date(data.expires_at) < new Date()) return null;
+  return data as Coupon;
+};
+
+/**
+ * Validate if a coupon code is valid and applicable for free shipping
+ */
+export const isFreeShippingCoupon = async (code: string): Promise<boolean> => {
+  const coupon = await fetchCouponByCode(code);
+  return !!coupon && coupon.type === 'free_shipping';
 };

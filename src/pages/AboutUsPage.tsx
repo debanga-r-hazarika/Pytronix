@@ -1,22 +1,13 @@
 import React from 'react';
-import { Building, Target, Users, Zap, Award, Rocket } from 'lucide-react';
+import { Building, Target, Users, Zap, Award, Rocket, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
-import teamMember1 from '../../public/fonts/mastercard-logo.png';
-import teamMember2 from '../../public/fonts/upi-logo.png';
-import teamMember3 from '../../public/fonts/visa-logo.png';
 
 const AboutUsPage: React.FC = () => {
   const stats = [
-    { value: '5+', label: 'Years in Business', icon: <Award className="w-8 h-8 text-neon-blue" /> },
-    { value: '10k+', label: 'Happy Customers', icon: <Users className="w-8 h-8 text-neon-green" /> },
-    { value: '100+', label: 'Products Launched', icon: <Rocket className="w-8 h-8 text-neon-violet" /> },
+    { value: '2+', label: 'Years in Business', icon: <Award className="w-8 h-8 text-neon-blue" /> },
+    { value: '500+', label: 'Happy Clients', icon: <Users className="w-8 h-8 text-neon-green" /> },
+    { value: '50+', label: 'Projects Done', icon: <Rocket className="w-8 h-8 text-neon-violet" /> },
     { value: '24/7', label: 'Customer Support', icon: <Zap className="w-8 h-8 text-yellow-400" /> },
-  ];
-
-  const team = [
-    { name: 'Alex Johnson', role: 'Founder & CEO', image: teamMember1 },
-    { name: 'Maria Garcia', role: 'Head of Engineering', image: teamMember2 },
-    { name: 'David Chen', role: 'Lead Product Designer', image: teamMember3 },
   ];
 
   return (
@@ -69,25 +60,15 @@ const AboutUsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Meet the Team Section */}
+      {/* Our Growth & Funding Section */}
       <div className="py-16 sm:py-24">
         <div className="container-custom">
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">Meet Our Team</h2>
-            <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">The passionate minds behind Phytronix.</p>
-          </div>
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {team.map((member, index) => (
-              <motion.div 
-                key={index}
-                className="text-center p-6 bg-gray-50 dark:bg-light-navy rounded-lg shadow-md"
-                whileHover={{ y: -5 }}
-              >
-                <img className="mx-auto h-24 w-24 rounded-full" src={member.image} alt={member.name} />
-                <h3 className="mt-6 text-base font-semibold leading-7 tracking-tight text-gray-900 dark:text-white">{member.name}</h3>
-                <p className="text-sm leading-6 text-neon-blue">{member.role}</p>
-              </motion.div>
-            ))}
+            <TrendingUp className="mx-auto h-12 w-12 text-neon-green" />
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">Our Growth & Funding</h2>
+            <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-400">
+              We're excited to announce that we have secured <span className="font-bold text-neon-green">₹7 Lakhs</span> in funding to fuel our mission and accelerate innovation.
+            </p>
           </div>
         </div>
       </div>

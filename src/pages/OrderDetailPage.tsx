@@ -1007,6 +1007,17 @@ const OrderDetailPage: React.FC = () => {
                   </div>
                 )}
                 
+                {/* Warranty Registration button - only for delivered orders */}
+                {order.status === 'delivered' && (
+                  <Link
+                    to="/warranty"
+                    className="w-full flex items-center justify-center px-4 py-2.5 border border-green-300 dark:border-green-700 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition"
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    Warranty Registration
+                  </Link>
+                )}
+                
                 <Link 
                   to="/contact"
                   className="w-full flex items-center justify-center px-4 py-2.5 border border-neon-blue rounded-lg text-neon-blue hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"

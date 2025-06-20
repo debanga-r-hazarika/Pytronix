@@ -236,6 +236,7 @@ const CheckoutPage: React.FC = () => {
   };
   
   const handleApplyCoupon = async () => {
+
     setCouponStatus('idle');
     setAppliedCoupon(null);
     const input = couponInput.trim();

@@ -26,6 +26,8 @@ const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const OrdersPage = lazy(() => import('../pages/OrdersPage'));
 const OrderDetailPage = lazy(() => import('../pages/OrderDetailPage'));
+const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage'));
+const TermsAndConditionsPage = lazy(() => import('../pages/TermsAndConditionsPage'));
 const OrderDetail = lazy(() => import('../pages/admin/OrderDetail'));
 const OrderCancellationsPage = lazy(() => import('../pages/admin/OrderCancellationsPage'));
 const ReviewManagementPage = lazy(() => import('../pages/admin/ReviewManagementPage'));
@@ -91,6 +93,8 @@ const AppRoutes: React.FC = () => {
               <Route path="/warranty" element={<WarrantyPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
               
               {/* Workshop Routes */}
               <Route path="/workshops" element={<WorkshopsPage />} />
